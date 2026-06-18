@@ -1,38 +1,23 @@
-import {
-  addDays,
-  endOfMonth,
-  format,
-  isValid,
-  parseISO,
-  startOfMonth,
-} from "date-fns";
+import { addDays, format, isValid, parseISO } from "date-fns";
 import type { DateRange } from "./types";
 
 const dateFormat = "yyyy-MM-dd";
-
-export function defaultDateRange(now = new Date()): DateRange {
-  return {
-    start: format(startOfMonth(now), dateFormat),
-    end: format(endOfMonth(now), dateFormat),
-  };
-}
 
 export function normalizeDateRange(
   start?: string | string[],
   end?: string | string[],
 ) {
-  const fallback = defaultDateRange();
   const startValue = Array.isArray(start) ? start[0] : start;
   const endValue = Array.isArray(end) ? end[0] : end;
   const startDate = startValue ? parseISO(startValue) : null;
   const endDate = endValue ? parseISO(endValue) : null;
 
   if (!startDate || !endDate || !isValid(startDate) || !isValid(endDate)) {
-    return fallback;
+    return {};
   }
 
   if (startDate > endDate) {
-    return fallback;
+    return {};
   }
 
   return {
@@ -42,6 +27,10 @@ export function normalizeDateRange(
 }
 
 export function halfOpenCreatedAtRange(range: DateRange) {
+  if (!range.start || !range.end) {
+    return null;
+  }
+
   return {
     gte: parseISO(range.start).toISOString(),
     lt: addDays(parseISO(range.end), 1).toISOString(),
@@ -49,6 +38,10 @@ export function halfOpenCreatedAtRange(range: DateRange) {
 }
 
 export function daysInInclusiveRange(range: DateRange) {
+  if (!range.start || !range.end) {
+    return 0;
+  }
+
   const start = parseISO(range.start);
   const exclusiveEnd = addDays(parseISO(range.end), 1);
 

@@ -5,7 +5,16 @@ import { useSearchParams } from "next/navigation";
 
 export function AppNav() {
   const searchParams = useSearchParams();
-  const query = searchParams.toString() ? `?${searchParams.toString()}` : "";
+  const queryParams = new URLSearchParams();
+  const start = searchParams.get("start");
+  const end = searchParams.get("end");
+
+  if (start && end) {
+    queryParams.set("start", start);
+    queryParams.set("end", end);
+  }
+
+  const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
   return (
     <nav className="flex items-center gap-2">

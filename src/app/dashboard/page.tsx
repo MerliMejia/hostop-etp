@@ -32,17 +32,18 @@ export default async function DashboardPage({
   const range = normalizeDateRange(params.start, params.end);
   const { supabase, profile } = await getUserProfile();
   const metrics = await getDashboardMetrics(supabase, profile.org_id, range);
+  const rangeDetail = range.start && range.end ? "Selected date range" : "All reservations";
 
   const kpis = [
     {
       label: "Revenue",
       value: currency.format(metrics.revenue),
-      detail: "Selected date range",
+      detail: rangeDetail,
     },
     {
       label: "Reservations",
       value: metrics.reservations.toLocaleString("en-US"),
-      detail: "Selected date range",
+      detail: rangeDetail,
     },
     {
       label: "Occupancy",
@@ -88,7 +89,7 @@ export default async function DashboardPage({
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <RevenueChart data={metrics.revenueByMonth} />
+        <RevenueChart data={metrics.revenueByMonth} subtitle={rangeDetail} />
         <SummaryButton range={range} />
       </section>
     </AppShell>

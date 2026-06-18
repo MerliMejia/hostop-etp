@@ -11,6 +11,7 @@ type SummaryState =
 
 export function SummaryButton({ range }: { range: DateRange }) {
   const [state, setState] = useState<SummaryState>({ status: "idle" });
+  const hasRange = Boolean(range.start && range.end);
 
   async function summarize() {
     setState({ status: "loading" });
@@ -46,7 +47,8 @@ export function SummaryButton({ range }: { range: DateRange }) {
             AI performance summary
           </h2>
           <p className="text-sm text-slate-500">
-            Uses aggregate metrics only for the selected date range.
+            Uses aggregate metrics only for{" "}
+            {hasRange ? "the selected date range" : "all reservations"}.
           </p>
         </div>
         <button
@@ -55,7 +57,11 @@ export function SummaryButton({ range }: { range: DateRange }) {
           onClick={summarize}
           type="button"
         >
-          {state.status === "loading" ? "Summarizing..." : "Summarize this month"}
+          {state.status === "loading"
+            ? "Summarizing..."
+            : hasRange
+              ? "Summarize date range"
+              : "Summarize all"}
         </button>
       </div>
       {state.status === "success" ? (

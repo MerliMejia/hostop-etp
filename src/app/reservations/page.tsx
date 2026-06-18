@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { DateRangeControls } from "@/components/date-range-controls";
+import { PaginationControls } from "@/components/pagination-controls";
+import { ReservationFilters } from "@/components/reservation-filters";
 import { getUserProfile } from "@/lib/auth";
 import { getReservations, getUnits } from "@/lib/data";
 import { normalizeDateRange } from "@/lib/date-range";
@@ -66,47 +67,12 @@ export default async function ReservationsPage({
         <DateRangeControls range={range} />
       </div>
 
-      <form className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <input name="start" type="hidden" value={range.start} />
-        <input name="end" type="hidden" value={range.end} />
-        <label className="text-sm font-medium text-slate-700">
-          Unit
-          <select
-            className="mt-1 block rounded-md border border-slate-300 px-3 py-2 text-slate-950"
-            defaultValue={params.unit ?? ""}
-            name="unit"
-          >
-            <option value="">All units</option>
-            {units.map((unit) => (
-              <option key={unit.id} value={unit.id}>
-                {unit.nickname}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm font-medium text-slate-700">
-          Status
-          <select
-            className="mt-1 block rounded-md border border-slate-300 px-3 py-2 text-slate-950"
-            defaultValue={params.status ?? ""}
-            name="status"
-          >
-            <option value="">All statuses</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </label>
-        <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-          Apply filters
-        </button>
-        <Link
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-          href={`/reservations?start=${range.start}&end=${range.end}`}
-        >
-          Clear filters
-        </Link>
-      </form>
+      <ReservationFilters
+        range={range}
+        selectedStatus={params.status}
+        selectedUnit={params.unit}
+        units={units}
+      />
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
@@ -125,7 +91,7 @@ export default async function ReservationsPage({
               {reservationPage.reservations.length === 0 ? (
                 <tr>
                   <td className="px-4 py-8 text-center text-slate-500" colSpan={6}>
-                    No reservations match this range.
+                    No reservations match these filters.
                   </td>
                 </tr>
               ) : (
@@ -162,25 +128,18 @@ export default async function ReservationsPage({
             Page {reservationPage.page} of {reservationPage.totalPages} ·{" "}
             {reservationPage.count} total
           </p>
-          <div className="flex items-center gap-2">
-            <Link
-              aria-disabled={reservationPage.page <= 1}
-              className="rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 aria-disabled:pointer-events-none aria-disabled:opacity-40"
-              href={pageHref(params, Math.max(1, reservationPage.page - 1))}
-            >
-              Previous
-            </Link>
-            <Link
-              aria-disabled={reservationPage.page >= reservationPage.totalPages}
-              className="rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-700 aria-disabled:pointer-events-none aria-disabled:opacity-40"
-              href={pageHref(
-                params,
-                Math.min(reservationPage.totalPages, reservationPage.page + 1),
-              )}
-            >
-              Next
-            </Link>
-          </div>
+          <PaginationControls
+            nextDisabled={reservationPage.page >= reservationPage.totalPages}
+            nextHref={pageHref(
+              params,
+              Math.min(reservationPage.totalPages, reservationPage.page + 1),
+            )}
+            previousDisabled={reservationPage.page <= 1}
+            previousHref={pageHref(
+              params,
+              Math.max(1, reservationPage.page - 1),
+            )}
+          />
         </div>
       </div>
     </AppShell>

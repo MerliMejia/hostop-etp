@@ -9,9 +9,10 @@ Small multi-tenant reservation analytics SaaS built with Next.js, Supabase, Tail
 - Row-level security for organization-scoped data.
 - Mock PMS reservation sync with idempotent upsert and batched 100ms delay.
 - Dashboard KPIs: revenue, reservations, occupancy, and ADR.
-- Recharts revenue bar chart for the last 6 months.
-- Reservations table with unit, status, date range filters, and 20-row pagination.
-- Persistent date range across dashboard and reservations pages.
+- Recharts revenue bar chart that follows the active dashboard date filter.
+- Reservations table with unit, status, optional date range filters, and 10-row pagination.
+- Dashboard and reservations default to all org reservations until a date range is applied.
+- Persistent applied date range across dashboard and reservations pages.
 - Claude-powered month summary using aggregate metrics only.
 
 ## Tech Decisions
@@ -20,7 +21,7 @@ Small multi-tenant reservation analytics SaaS built with Next.js, Supabase, Tail
 - **Supabase RLS** enforces tenancy at the database layer, not just in UI filters.
 - **API route handlers** are used instead of Edge Functions to reduce deployment overhead for the trial.
 - **`pms_reservation_id`** is added to reservations so mock PMS sync can upsert deterministically without duplicate rows.
-- **Half-open date ranges** use `created_at >= start` and `created_at < end + 1 day` everywhere date range filtering is applied.
+- **Half-open date ranges** use `created_at >= start` and `created_at < end + 1 day` everywhere date range filtering is applied. When no date range is selected, reservation analytics and lists are unfiltered by date.
 
 ## Local Setup
 
@@ -102,9 +103,9 @@ Manual checks:
 - Login/logout works.
 - `/dashboard` and `/reservations` redirect to login when unauthenticated.
 - Sync creates about 50 reservations and re-sync does not duplicate them.
-- Dashboard KPIs and chart update after sync.
-- Date range persists across dashboard and reservations pages.
-- Reservations filters and pagination work.
+- Dashboard KPIs and chart update after sync, with unfiltered KPIs showing all synced reservations.
+- Applied date range persists across dashboard and reservations pages, and clear controls return to the unfiltered view.
+- Reservations filters and 10-row pagination work.
 - Claude summary works when `ANTHROPIC_API_KEY` is present and returns a controlled error when missing.
 - Two users cannot see each other’s units or reservations.
 

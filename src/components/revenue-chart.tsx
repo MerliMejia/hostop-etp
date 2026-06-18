@@ -12,16 +12,17 @@ import {
 
 type RevenueChartProps = {
   data: Array<{ month: string; revenue: number }>;
+  subtitle: string;
 };
 
-export function RevenueChart({ data }: RevenueChartProps) {
+export function RevenueChart({ data, subtitle }: RevenueChartProps) {
   return (
     <div className="h-80 rounded-lg border border-slate-200 bg-white p-4">
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-slate-950">
           Revenue by month
         </h2>
-        <p className="text-sm text-slate-500">Last 6 months</p>
+        <p className="text-sm text-slate-500">{subtitle}</p>
       </div>
       <ResponsiveContainer height="82%" width="100%">
         <BarChart data={data}>

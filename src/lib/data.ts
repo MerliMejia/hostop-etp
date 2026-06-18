@@ -3,7 +3,6 @@ import {
   format,
   parseISO,
   startOfMonth,
-  subMonths,
 } from "date-fns";
 import { daysInInclusiveRange, halfOpenCreatedAtRange } from "./date-range";
 import type {
@@ -23,6 +22,45 @@ type ReservationFilters = {
   status?: string;
   page?: number;
 };
+
+function daysInCreatedAtSpan(reservations: Reservation[]) {
+  if (reservations.length === 0) {
+    return 0;
+  }
+
+  const timestamps = reservations.map((reservation) =>
+    parseISO(reservation.created_at).getTime(),
+  );
+  const firstCreatedAt = new Date(Math.min(...timestamps));
+  const lastCreatedAt = new Date(Math.max(...timestamps));
+
+  return daysInInclusiveRange({
+    start: format(firstCreatedAt, "yyyy-MM-dd"),
+    end: format(lastCreatedAt, "yyyy-MM-dd"),
+  });
+}
+
+function revenueChartMonths(range: DateRange, reservations: Reservation[]) {
+  if (range.start && range.end) {
+    return eachMonthOfInterval({
+      start: startOfMonth(parseISO(range.start)),
+      end: startOfMonth(parseISO(range.end)),
+    });
+  }
+
+  if (reservations.length === 0) {
+    return [];
+  }
+
+  const timestamps = reservations.map((reservation) =>
+    parseISO(reservation.created_at).getTime(),
+  );
+
+  return eachMonthOfInterval({
+    start: startOfMonth(new Date(Math.min(...timestamps))),
+    end: startOfMonth(new Date(Math.max(...timestamps))),
+  });
+}
 
 export async function getUnits(
   supabase: SupabaseClientLike,
@@ -47,23 +85,23 @@ export async function getDashboardMetrics(
   range: DateRange,
 ): Promise<DashboardMetrics> {
   const createdAt = halfOpenCreatedAtRange(range);
-  const [unitsResult, reservationsResult, chartResult] = await Promise.all([
+  let reservationsQuery = supabase
+    .from("reservations")
+    .select("id, total_revenue, status, check_in, check_out, created_at")
+    .eq("org_id", orgId);
+
+  if (createdAt) {
+    reservationsQuery = reservationsQuery
+      .gte("created_at", createdAt.gte)
+      .lt("created_at", createdAt.lt);
+  }
+
+  const [unitsResult, reservationsResult] = await Promise.all([
     supabase
       .from("units")
       .select("id")
       .eq("org_id", orgId),
-    supabase
-      .from("reservations")
-      .select("id, total_revenue, status, check_in, check_out, created_at")
-      .eq("org_id", orgId)
-      .gte("created_at", createdAt.gte)
-      .lt("created_at", createdAt.lt),
-    supabase
-      .from("reservations")
-      .select("total_revenue, created_at, status")
-      .eq("org_id", orgId)
-      .gte("created_at", startOfMonth(subMonths(new Date(), 5)).toISOString())
-      .lt("created_at", new Date().toISOString()),
+    reservationsQuery,
   ]);
 
   if (unitsResult.error) {
@@ -72,10 +110,6 @@ export async function getDashboardMetrics(
 
   if (reservationsResult.error) {
     throw new Error(reservationsResult.error.message);
-  }
-
-  if (chartResult.error) {
-    throw new Error(chartResult.error.message);
   }
 
   const reservations = reservationsResult.data ?? [];
@@ -89,16 +123,16 @@ export async function getDashboardMetrics(
   );
   const roomsSold = activeReservations.length;
   const unitsCount = unitsResult.data?.length ?? 0;
-  const roomsAvailable = unitsCount * daysInInclusiveRange(range);
+  const dateSpanDays = createdAt
+    ? daysInInclusiveRange(range)
+    : daysInCreatedAtSpan(reservations);
+  const roomsAvailable = unitsCount * dateSpanDays;
   const occupancyRate = roomsAvailable > 0 ? roomsSold / roomsAvailable : 0;
   const adr = roomsSold > 0 ? revenue / roomsSold : 0;
-  const months = eachMonthOfInterval({
-    start: startOfMonth(subMonths(new Date(), 5)),
-    end: startOfMonth(new Date()),
-  });
+  const months = revenueChartMonths(range, reservations);
   const revenueByMonth = months.map((month) => {
     const key = format(month, "yyyy-MM");
-    const monthRevenue = (chartResult.data ?? [])
+    const monthRevenue = reservations
       .filter((reservation: Reservation) => {
         return (
           reservation.status !== "cancelled" &&
@@ -112,7 +146,7 @@ export async function getDashboardMetrics(
       );
 
     return {
-      month: format(month, "MMM"),
+      month: format(month, "MMM yyyy"),
       revenue: monthRevenue,
     };
   });
@@ -135,7 +169,7 @@ export async function getReservations(
   filters: ReservationFilters,
 ) {
   const page = Math.max(1, filters.page ?? 1);
-  const pageSize = 20;
+  const pageSize = 10;
   const createdAt = halfOpenCreatedAtRange(range);
   let query = supabase
     .from("reservations")
@@ -143,9 +177,11 @@ export async function getReservations(
       "id, org_id, unit_id, pms_reservation_id, guest_name, check_in, check_out, total_revenue, status, channel, created_at, units(nickname, city)",
       { count: "exact" },
     )
-    .eq("org_id", orgId)
-    .gte("created_at", createdAt.gte)
-    .lt("created_at", createdAt.lt);
+    .eq("org_id", orgId);
+
+  if (createdAt) {
+    query = query.gte("created_at", createdAt.gte).lt("created_at", createdAt.lt);
+  }
 
   if (filters.unitId) {
     query = query.eq("unit_id", filters.unitId);

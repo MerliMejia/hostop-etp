@@ -7,8 +7,8 @@ import { requireEnv } from "@/lib/env";
 import { getOptionalUserProfile } from "@/lib/auth";
 
 const requestSchema = z.object({
-  start: z.string(),
-  end: z.string(),
+  start: z.string().optional(),
+  end: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -30,6 +30,10 @@ export async function POST(request: Request) {
 
     const range = normalizeDateRange(parsed.data.start, parsed.data.end);
     const metrics = await getDashboardMetrics(supabase, profile.org_id, range);
+    const period =
+      range.start && range.end
+        ? `date range ${range.start} to ${range.end}`
+        : "all reservations";
     const anthropic = new Anthropic({
       apiKey: requireEnv("ANTHROPIC_API_KEY"),
     });
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Write a 2-3 sentence plain-English performance summary for a short-term rental portfolio. Use only these aggregate metrics: date range ${range.start} to ${range.end}, revenue $${metrics.revenue.toFixed(2)}, reservations ${metrics.reservations}, rooms sold ${metrics.roomsSold}, rooms available ${metrics.roomsAvailable}, occupancy ${(metrics.occupancyRate * 100).toFixed(1)}%, ADR $${metrics.adr.toFixed(2)}.`,
+          content: `Write a 2-3 sentence plain-English performance summary for a short-term rental portfolio. Use only these aggregate metrics: ${period}, revenue $${metrics.revenue.toFixed(2)}, reservations ${metrics.reservations}, rooms sold ${metrics.roomsSold}, rooms available ${metrics.roomsAvailable}, occupancy ${(metrics.occupancyRate * 100).toFixed(1)}%, ADR $${metrics.adr.toFixed(2)}.`,
         },
       ],
     });
@@ -56,7 +60,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Unable to summarize this month.",
+            : "Unable to summarize performance.",
       },
       { status: 500 },
     );
