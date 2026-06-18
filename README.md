@@ -75,18 +75,7 @@ The migration creates:
 
 It also enables RLS, creates policies for org-scoped access, and adds an auth trigger that creates an organization, user profile, and starter units for each signup.
 
-For a test account, sign up with any email/password in the app. If email confirmations are enabled in Supabase, either confirm the user or disable confirmations for the trial project.
-
-## Deployment
-
-Deploy to Vercel and add the same environment variables in the Vercel project settings. The recommended reviewer test credentials format is:
-
-```text
-Email: reviewer@example.com
-Password: hostop-demo-password
-```
-
-Create this user through the app after deploying, run **Sync Reservations**, and verify dashboard data appears before sending the Vercel URL.
+For a test account, sign up with any email/password in the app.
 
 ## Verification
 
@@ -96,23 +85,3 @@ Run:
 pnpm lint
 pnpm build
 ```
-
-Manual checks:
-
-- Signup creates an org, profile, and starter units.
-- Login/logout works.
-- `/dashboard` and `/reservations` redirect to login when unauthenticated.
-- Sync creates about 50 reservations and re-sync does not duplicate them.
-- Dashboard KPIs and chart update after sync, with unfiltered KPIs showing all synced reservations.
-- Applied date range persists across dashboard and reservations pages, and clear controls return to the unfiltered view.
-- Reservations filters and 10-row pagination work.
-- Claude summary works when `ANTHROPIC_API_KEY` is present and returns a controlled error when missing.
-- Two users cannot see each other’s units or reservations.
-
-## AI Tool Usage
-
-This project was planned and implemented with Codex. Useful prompts included:
-
-- Asking for a decision-complete implementation plan from the HostOp trial prompt.
-- Asking Codex to implement the plan end-to-end with Supabase RLS, Next.js App Router, and Tailwind.
-- Asking Codex to verify the implementation with lint/build and tighten issues found during verification.
