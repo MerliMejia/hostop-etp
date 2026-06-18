@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       apiKey: requireEnv("ANTHROPIC_API_KEY"),
     });
     const message = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest",
+      model: "claude-haiku-4-5",
       max_tokens: 180,
       temperature: 0.2,
       messages: [
