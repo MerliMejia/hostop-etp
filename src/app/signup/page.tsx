@@ -4,6 +4,7 @@ import { signup } from "./actions";
 type SignupPageProps = {
   searchParams: Promise<{
     error?: string;
+    status?: string;
   }>;
 };
 
@@ -50,6 +51,15 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
             {params.error}
           </p>
+        ) : null}
+        {params.status === "check-email" ? (
+          <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            <p className="font-medium">Check your email</p>
+            <p className="mt-1">
+              Open the confirmation link we sent you to finish creating your
+              account.
+            </p>
+          </div>
         ) : null}
         <button className="mt-6 w-full rounded-md bg-slate-950 px-4 py-2 font-medium text-white hover:bg-slate-800">
           Sign up
