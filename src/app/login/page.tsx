@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { login } from "./actions";
 
 type LoginPageProps = {
@@ -51,9 +52,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             {params.error}
           </p>
         ) : null}
-        <button className="mt-6 w-full rounded-md bg-slate-950 px-4 py-2 font-medium text-white hover:bg-slate-800">
+        <PendingSubmitButton
+          className="mt-6 w-full rounded-md bg-slate-950 px-4 py-2 font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          pendingChildren="Logging in..."
+        >
           Log in
-        </button>
+        </PendingSubmitButton>
         <p className="mt-6 text-center text-sm text-slate-600">
           Need an account?{" "}
           <Link className="font-medium text-slate-950 underline" href="/signup">
