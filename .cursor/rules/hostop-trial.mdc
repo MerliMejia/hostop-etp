@@ -1,0 +1,27 @@
+---
+description: Project rules for the HostOp Engineering Trial app
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# HostOp Trial Rules
+
+Use `AGENTS.md` as the canonical project context.
+
+- Use pnpm for package commands.
+- Keep all Supabase data org-scoped and backed by RLS.
+- Preserve date filtering as `created_at >= start` and `created_at < end + 1 day`.
+- Keep the selected date range persistent across dashboard and reservations pages.
+- Keep PMS sync idempotent through `org_id,pms_reservation_id`.
+- Do not commit `.env.local` or real credentials.
+- Run `pnpm lint` and `pnpm build` before handoff.
+
+Important files:
+
+- `src/lib/data.ts`
+- `src/lib/date-range.ts`
+- `src/app/dashboard/page.tsx`
+- `src/app/reservations/page.tsx`
+- `src/app/api/sync-reservations/route.ts`
+- `supabase/migrations/`
